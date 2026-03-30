@@ -1,0 +1,669 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Smart Solar Optimization System</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+      /* ── Reset & Variables ─────────────────────────── */
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      :root {
+        --sun: #f5a623;
+        --teal: #00c9a7;
+        --navy: #1a2b4a;
+        --card: #1e3355;
+        --bg: #0f1e36;
+        --text: #e8f0fe;
+        --muted: #8fa4c8;
+        --danger: #ff5252;
+        --warn: #ffb74d;
+        --ok: #69f0ae;
+      }
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: "Segoe UI", sans-serif;
+        min-height: 100vh;
+      }
+
+      /* ── Header ────────────────────────────────────── */
+      header {
+        background: linear-gradient(135deg, var(--navy) 0%, #0a3d62 100%);
+        padding: 18px 32px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 2px solid var(--sun);
+      }
+      header h1 {
+        font-size: 1.4rem;
+        color: var(--sun);
+      }
+      header h1 span {
+        color: var(--teal);
+      }
+      #live-badge {
+        background: var(--teal);
+        color: var(--navy);
+        padding: 4px 14px;
+        border-radius: 20px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        animation: pulse 2s infinite;
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.6;
+        }
+      }
+
+      /* ── Layout ────────────────────────────────────── */
+      main {
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 28px 20px;
+      }
+      .grid-4 {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 18px;
+        margin-bottom: 28px;
+      }
+      .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+        gap: 18px;
+        margin-bottom: 28px;
+      }
+
+      /* ── Cards ─────────────────────────────────────── */
+      .card {
+        background: var(--card);
+        border-radius: 14px;
+        padding: 22px;
+        border: 1px solid rgba(255, 255, 255, 0.07);
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+      }
+      .card h2 {
+        font-size: 0.85rem;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-bottom: 10px;
+      }
+
+      /* ── Stat Cards ─────────────────────────────────── */
+      .stat-card {
+        text-align: center;
+      }
+      .stat-icon {
+        font-size: 2rem;
+        margin-bottom: 6px;
+      }
+      .stat-value {
+        font-size: 2rem;
+        font-weight: 800;
+        color: var(--sun);
+      }
+      .stat-unit {
+        font-size: 0.8rem;
+        color: var(--muted);
+      }
+      .stat-label {
+        font-size: 0.78rem;
+        color: var(--muted);
+        margin-top: 4px;
+      }
+
+      /* ── Alerts ─────────────────────────────────────── */
+      .alert-list {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .alert-item {
+        padding: 10px 14px;
+        border-radius: 8px;
+        font-size: 0.88rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .alert-success {
+        background: rgba(105, 240, 174, 0.12);
+        border-left: 3px solid var(--ok);
+      }
+      .alert-warning {
+        background: rgba(255, 183, 77, 0.12);
+        border-left: 3px solid var(--warn);
+      }
+      .alert-danger {
+        background: rgba(255, 82, 82, 0.12);
+        border-left: 3px solid var(--danger);
+      }
+
+      /* ── Form / Inputs ──────────────────────────────── */
+      .form-row {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 14px;
+      }
+      label {
+        font-size: 0.78rem;
+        color: var(--muted);
+        display: block;
+        margin-bottom: 4px;
+      }
+      input,
+      select {
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        color: var(--text);
+        border-radius: 8px;
+        padding: 8px 12px;
+        font-size: 0.88rem;
+        flex: 1;
+        min-width: 130px;
+      }
+      button {
+        background: var(--sun);
+        color: var(--navy);
+        border: none;
+        border-radius: 8px;
+        padding: 10px 22px;
+        font-weight: 700;
+        cursor: pointer;
+        font-size: 0.88rem;
+        transition: opacity 0.2s;
+      }
+      button:hover {
+        opacity: 0.85;
+      }
+      .result-box {
+        background: rgba(0, 201, 167, 0.08);
+        border: 1px solid rgba(0, 201, 167, 0.25);
+        border-radius: 10px;
+        padding: 14px;
+        margin-top: 12px;
+        font-size: 0.88rem;
+        line-height: 1.7;
+      }
+      .result-box strong {
+        color: var(--teal);
+      }
+
+      /* ── Scheme Cards ───────────────────────────────── */
+      .scheme-card {
+        background: rgba(255, 255, 255, 0.04);
+        border-radius: 10px;
+        padding: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        margin-bottom: 10px;
+      }
+      .scheme-card h3 {
+        font-size: 0.92rem;
+        color: var(--sun);
+        margin-bottom: 4px;
+      }
+      .scheme-card p {
+        font-size: 0.8rem;
+        color: var(--muted);
+        margin-bottom: 2px;
+      }
+      .scheme-card a {
+        color: var(--teal);
+        font-size: 0.8rem;
+      }
+
+      /* ── Support Chat ───────────────────────────────── */
+      .chat-box {
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 10px;
+        padding: 14px;
+        min-height: 100px;
+        margin-bottom: 10px;
+        font-size: 0.88rem;
+        line-height: 1.6;
+      }
+      .chat-input-row {
+        display: flex;
+        gap: 8px;
+      }
+      .chat-input-row input {
+        flex: 1;
+      }
+
+      /* ── Footer ─────────────────────────────────────── */
+      footer {
+        text-align: center;
+        color: var(--muted);
+        font-size: 0.75rem;
+        padding: 24px;
+        border-top: 1px solid rgba(255, 255, 255, 0.06);
+        margin-top: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>☀️ Smart Solar <span>Optimization</span> System</h1>
+      <span id="live-badge">● LIVE</span>
+    </header>
+
+    <main>
+      <!-- ── KPI Cards ──────────────────────────────────── -->
+      <div class="grid-4">
+        <div class="card stat-card">
+          <div class="stat-icon">⚡</div>
+          <div class="stat-value" id="kpi-power">—</div>
+          <div class="stat-unit">kW</div>
+          <div class="stat-label">Power Output</div>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-icon">🌡️</div>
+          <div class="stat-value" id="kpi-temp">—</div>
+          <div class="stat-unit">°C</div>
+          <div class="stat-label">Panel Temperature</div>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-icon">💡</div>
+          <div class="stat-value" id="kpi-light">—</div>
+          <div class="stat-unit">W/m²</div>
+          <div class="stat-label">Light Intensity</div>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-icon">🔋</div>
+          <div class="stat-value" id="kpi-battery">—</div>
+          <div class="stat-unit">%</div>
+          <div class="stat-label">Battery Level</div>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-icon">🌫️</div>
+          <div class="stat-value" id="kpi-dust">—</div>
+          <div class="stat-unit">level</div>
+          <div class="stat-label">Dust Level</div>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-icon">🔌</div>
+          <div class="stat-value" id="kpi-voltage">—</div>
+          <div class="stat-unit">V</div>
+          <div class="stat-label">Voltage</div>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-icon">〰️</div>
+          <div class="stat-value" id="kpi-current">—</div>
+          <div class="stat-unit">A</div>
+          <div class="stat-label">Current</div>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-icon">📐</div>
+          <div class="stat-value" id="kpi-angle">—</div>
+          <div class="stat-unit">°</div>
+          <div class="stat-label">Panel Angle</div>
+        </div>
+      </div>
+
+      <!-- ── Charts + Alerts ───────────────────────────── -->
+      <div class="grid-2">
+        <div class="card">
+          <h2>📈 7-Day Energy Generation (kWh)</h2>
+          <canvas id="energyChart" height="160"></canvas>
+        </div>
+        <div class="card">
+          <h2>🔔 Maintenance Alerts</h2>
+          <ul class="alert-list" id="alert-list">
+            <li class="alert-item alert-success">✅ Loading alerts…</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- ── Placement Optimizer + Predict Output ──────── -->
+      <div class="grid-2">
+        <!-- Placement Optimizer -->
+        <div class="card">
+          <h2>📐 Panel Placement Optimizer</h2>
+          <div class="form-row">
+            <div style="flex: 1">
+              <label>Latitude</label>
+              <input type="number" id="opt-lat" value="17.38" step="0.01" />
+            </div>
+            <div style="flex: 1">
+              <label>Longitude</label>
+              <input type="number" id="opt-lng" value="78.48" step="0.01" />
+            </div>
+            <div style="flex: 1">
+              <label>Month</label>
+              <select id="opt-month">
+                <option value="1">January</option>
+                <option value="2">February</option>
+                <option value="3">March</option>
+                <option value="4">April</option>
+                <option value="5">May</option>
+                <option value="6">June</option>
+                <option value="7">July</option>
+                <option value="8">August</option>
+                <option value="9">September</option>
+                <option value="10">October</option>
+                <option value="11">November</option>
+                <option value="12" selected>December</option>
+              </select>
+            </div>
+          </div>
+          <button onclick="runOptimizer()">Optimize Placement</button>
+          <div class="result-box" id="opt-result" style="display: none"></div>
+        </div>
+
+        <!-- Output Predictor -->
+        <div class="card">
+          <h2>🔮 Predict Power Output (ML)</h2>
+          <div class="form-row">
+            <div style="flex: 1">
+              <label>Temperature (°C)</label>
+              <input type="number" id="pred-temp" value="38" />
+            </div>
+            <div style="flex: 1">
+              <label>Dust Level</label>
+              <input type="number" id="pred-dust" value="15" />
+            </div>
+            <div style="flex: 1">
+              <label>Tilt Angle (°)</label>
+              <input type="number" id="pred-tilt" value="20" />
+            </div>
+            <div style="flex: 1">
+              <label>Panel Capacity (kW)</label>
+              <input type="number" id="pred-cap" value="5" />
+            </div>
+          </div>
+          <button onclick="runPredictor()">Predict Output</button>
+          <div class="result-box" id="pred-result" style="display: none"></div>
+        </div>
+      </div>
+
+      <!-- ── Government Schemes ────────────────────────── -->
+      <div class="card" style="margin-bottom: 28px">
+        <h2>🏛️ Government Solar Schemes & Benefits</h2>
+        <div id="schemes-container">Loading schemes…</div>
+      </div>
+
+      <!-- ── Customer Support ───────────────────────────── -->
+      <div class="card" style="margin-bottom: 28px">
+        <h2>💬 Customer Support Assistant</h2>
+        <div class="chat-box" id="chat-box">
+          Hi! Describe your issue and I'll help you.
+        </div>
+        <div class="chat-input-row">
+          <input
+            type="text"
+            id="chat-input"
+            placeholder="e.g. dust on panels, low power, battery issue…"
+          />
+          <button onclick="sendSupport()">Send</button>
+        </div>
+      </div>
+    </main>
+
+    <footer>
+      Team Fantastic Four 😎 | Hackxtreme – GDG × GLEC | Smart Solar
+      Optimization System<br />
+      Jaswanth CH · Naga Teja J · Radhakrishna CH · Sindhuri Reddy E
+    </footer>
+
+    <script>
+      const API = "http://localhost:5000/api";
+
+      // ── Sensor Polling ────────────────────────────────
+      async function fetchSensors() {
+        try {
+          const r = await fetch(`${API}/sensor-data`);
+          const d = await r.json();
+          document.getElementById("kpi-power").textContent =
+            d.power_output ?? "—";
+          document.getElementById("kpi-temp").textContent =
+            d.temperature ?? "—";
+          document.getElementById("kpi-light").textContent =
+            d.light_intensity ?? "—";
+          document.getElementById("kpi-battery").textContent =
+            d.battery_percentage ?? "—";
+          document.getElementById("kpi-dust").textContent = d.dust_level ?? "—";
+          document.getElementById("kpi-voltage").textContent = d.voltage ?? "—";
+          document.getElementById("kpi-current").textContent = d.current ?? "—";
+          document.getElementById("kpi-angle").textContent =
+            d.panel_angle ?? "—";
+        } catch {
+          /* backend may not be running in demo */
+        }
+      }
+
+      // ── Alerts ────────────────────────────────────────
+      async function fetchAlerts() {
+        try {
+          const r = await fetch(`${API}/alerts`);
+          const alerts = await r.json();
+          const list = document.getElementById("alert-list");
+          list.innerHTML = alerts
+            .map(
+              (a) => `
+        <li class="alert-item alert-${a.type}">
+          ${a.icon} ${a.message}
+        </li>
+      `,
+            )
+            .join("");
+        } catch {}
+      }
+
+      // ── Energy Chart ──────────────────────────────────
+      let energyChart;
+      async function fetchEnergyHistory() {
+        try {
+          const r = await fetch(`${API}/energy-history`);
+          const data = await r.json();
+          const labels = data.map((d) => d.date.slice(5));
+          const values = data.map((d) => d.energy_kwh);
+          const ctx = document.getElementById("energyChart").getContext("2d");
+          if (energyChart) energyChart.destroy();
+          energyChart = new Chart(ctx, {
+            type: "bar",
+            data: {
+              labels,
+              datasets: [
+                {
+                  label: "Energy (kWh)",
+                  data: values,
+                  backgroundColor: "rgba(245,166,35,0.7)",
+                  borderColor: "#F5A623",
+                  borderWidth: 2,
+                  borderRadius: 6,
+                },
+              ],
+            },
+            options: {
+              plugins: { legend: { display: false } },
+              scales: {
+                x: {
+                  ticks: { color: "#8FA4C8" },
+                  grid: { color: "rgba(255,255,255,.05)" },
+                },
+                y: {
+                  ticks: { color: "#8FA4C8" },
+                  grid: { color: "rgba(255,255,255,.05)" },
+                },
+              },
+            },
+          });
+        } catch {}
+      }
+
+      // ── Government Schemes ────────────────────────────
+      async function fetchSchemes() {
+        try {
+          const r = await fetch(`${API}/government-schemes`);
+          const schemes = await r.json();
+          document.getElementById("schemes-container").innerHTML = schemes
+            .map(
+              (s) => `
+        <div class="scheme-card">
+          <h3>${s.name}</h3>
+          <p>${s.benefit}</p>
+          <p><strong style="color:var(--ok)">${s.subsidy}</strong></p>
+          <a href="${s.link}" target="_blank">Learn more →</a>
+        </div>
+      `,
+            )
+            .join("");
+        } catch {
+          document.getElementById("schemes-container").innerHTML =
+            "<p style='color:var(--muted)'>Start backend to load schemes.</p>";
+        }
+      }
+
+      // ── Optimizer ─────────────────────────────────────
+      async function runOptimizer() {
+        const lat = parseFloat(document.getElementById("opt-lat").value);
+        const lng = parseFloat(document.getElementById("opt-lng").value);
+        const month = parseInt(document.getElementById("opt-month").value);
+        const box = document.getElementById("opt-result");
+        box.style.display = "block";
+        box.textContent = "Calculating…";
+        try {
+          const r = await fetch(`${API}/optimize-placement`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ latitude: lat, longitude: lng, month }),
+          });
+          const d = await r.json();
+          box.innerHTML = `
+        <strong>Optimal Tilt:</strong> ${d.optimal_tilt_angle}°<br>
+        <strong>Orientation:</strong> ${d.optimal_orientation}<br>
+        <strong>Peak Sun Hours:</strong> ${d.estimated_peak_sun_hours} hrs/day<br>
+        <br>📋 ${d.recommendation}
+      `;
+        } catch {
+          // Fallback calculation (no backend needed)
+          const dayOfYear = (month - 1) * 30 + 15;
+          const decl =
+            23.45 *
+            Math.sin((Math.PI / 180) * ((360 / 365) * (dayOfYear - 81)));
+          const tilt = Math.abs(lat - decl).toFixed(1);
+          const peakHrs = (5 + 2 * Math.cos((Math.PI / 180) * lat)).toFixed(2);
+          box.innerHTML = `
+        <strong>Optimal Tilt:</strong> ${tilt}° (calculated locally)<br>
+        <strong>Orientation:</strong> ${lat >= 0 ? "South" : "North"}<br>
+        <strong>Est. Peak Sun Hours:</strong> ${peakHrs} hrs/day<br>
+        <br>📋 Set panel tilt to ${tilt}° facing ${lat >= 0 ? "South" : "North"}.
+      `;
+        }
+      }
+
+      // ── Output Predictor ──────────────────────────────
+      async function runPredictor() {
+        const temp = parseFloat(document.getElementById("pred-temp").value);
+        const dust = parseFloat(document.getElementById("pred-dust").value);
+        const tilt = parseFloat(document.getElementById("pred-tilt").value);
+        const cap = parseFloat(document.getElementById("pred-cap").value);
+        const box = document.getElementById("pred-result");
+        box.style.display = "block";
+        box.textContent = "Predicting…";
+        try {
+          const r = await fetch(`${API}/predict-output`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              temperature: temp,
+              dust_level: dust,
+              tilt_angle: tilt,
+              panel_capacity_kw: cap,
+            }),
+          });
+          const d = await r.json();
+          box.innerHTML = `
+        <strong>Predicted Output:</strong> ${d.predicted_output_kw} kW<br>
+        <strong>Temp Loss:</strong> ${d.efficiency_loss_temperature}<br>
+        <strong>Dust Loss:</strong> ${d.efficiency_loss_dust}<br>
+        <br>📋 ${d.recommendation}
+      `;
+        } catch {
+          // Fallback physics calculation
+          const tempLoss = Math.max(0, (temp - 25) * 0.004);
+          const dustLoss = dust * 0.005;
+          const tiltFac = Math.cos((Math.PI / 180) * Math.abs(tilt - 15));
+          const output = Math.max(
+            0,
+            cap * tiltFac * (1 - tempLoss - dustLoss),
+          ).toFixed(3);
+          box.innerHTML = `
+        <strong>Predicted Output:</strong> ${output} kW (local estimate)<br>
+        <strong>Temp Loss:</strong> ${(tempLoss * 100).toFixed(1)}%<br>
+        <strong>Dust Loss:</strong> ${(dustLoss * 100).toFixed(1)}%<br>
+        <br>📋 ${dust > 20 ? "🧹 Clean panels!" : temp > 45 ? "🌡️ Check cooling" : "✅ Looks good"}
+      `;
+        }
+      }
+
+      // ── Customer Support ──────────────────────────────
+      async function sendSupport() {
+        const input = document.getElementById("chat-input");
+        const chatBox = document.getElementById("chat-box");
+        const issue = input.value.trim();
+        if (!issue) return;
+        chatBox.innerHTML += `<br><strong style="color:var(--sun)">You:</strong> ${issue}`;
+        input.value = "";
+        try {
+          const r = await fetch(`${API}/customer-support`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ issue }),
+          });
+          const d = await r.json();
+          chatBox.innerHTML += `<br><strong style="color:var(--teal)">Support:</strong> ${d.response}`;
+          if (d.ticket_id) chatBox.innerHTML += ` (Ticket: ${d.ticket_id})`;
+        } catch {
+          const responses = {
+            dust: "Recommended: clean panels every 2 weeks. Soft cloth + water works best.",
+            "low power":
+              "Check for shading, dust accumulation, or incorrect tilt angle.",
+            battery: "Ensure connections are tight. Check inverter settings.",
+            temperature: "Ensure adequate airflow under panels.",
+          };
+          const reply = Object.entries(responses).find(([k]) =>
+            issue.toLowerCase().includes(k),
+          );
+          chatBox.innerHTML += `<br><strong style="color:var(--teal)">Support:</strong> ${reply ? reply[1] : "Our team will contact you shortly."}`;
+        }
+        chatBox.scrollTop = chatBox.scrollHeight;
+      }
+
+      // ── Init ──────────────────────────────────────────
+      (async function init() {
+        await Promise.all([
+          fetchSensors(),
+          fetchAlerts(),
+          fetchEnergyHistory(),
+          fetchSchemes(),
+        ]);
+        setInterval(fetchSensors, 5000);
+        setInterval(fetchAlerts, 10000);
+      })();
+
+      // Allow Enter key in chat
+      document
+        .getElementById("chat-input")
+        ?.addEventListener("keypress", (e) => {
+          if (e.key === "Enter") sendSupport();
+        });
+    </script>
+  </body>
+</html>
