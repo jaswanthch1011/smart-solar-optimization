@@ -152,5 +152,5 @@ python iot_simulator/sensor_simulator.py --hardware --port /dev/ttyUSB0
 
 ---
 
-## 🏆 Hackxtreme – GDG × GLEC
+## 🏆 Hackxtreme – GDG 
 *Sustainable energy through intelligent systems.*
