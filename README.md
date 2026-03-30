@@ -1,7 +1,7 @@
 # 🌞 Smart Solar Optimization System
 **Team Fantastic Four 😎 | Hackxtreme – GDG**
 > Jaswanth CH · Naga Teja J · Radhakrishna CH · Sindhuri Reddy E
-> Gokaraju Lailavathi Engineering College
+
 
 ---
 
